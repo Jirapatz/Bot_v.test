@@ -406,13 +406,16 @@ class BinanceClient:
         print("TestBookTicker", self.subscribe_channel(list(self.contracts.values()), "bookTicker"))
         print("TestAggTrade", self.subscribe_channel(list(self.contracts.values()), "aggTrade"))
 
-    def _on_close(self, ws):
+    def _on_close(self, ws, close_status, close_msg):
         
         """
         Callback method triggered when the connection drops
         :return:
         """
-
+        print("BinanceClient._on_close() called with the following arguments:")
+        print("ws:", ws)
+        print("close_status:", close_status)
+        print("close_msg:", close_msg)
         logger.warning("Binance Websocket connection closed")
 
     def _on_error(self, ws, msg: str):
