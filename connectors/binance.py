@@ -38,14 +38,16 @@ class BinanceClient:
         if self.futures:
             self.platform = "binance_futures"
             if testnet:
+                print("Testnet")
                 self._base_url = "https://testnet.binancefuture.com"
-                self._wss_url = "wss://stream.binancefuture.com/ws"
+                self._wss_url = "wss://stream.binancefuture.com/ws/!miniTicker@arr"
             else:
                 self._base_url = "https://fapi.binance.com"
                 self._wss_url = "wss://fstream.binance.com/ws"
         else:
             self.platform = "binance_spot"
             if testnet:
+                print("Testnet")
                 self._base_url = "https://testnet.binance.vision"
                 self._wss_url = "wss://testnet.binance.vision/stream"
             else:
@@ -69,7 +71,7 @@ class BinanceClient:
         self.logs = []
 
         self._ws_id = 1
-        # self.ws: websocket.WebSocketApp
+        self.ws: websocket.WebSocketApp
         self.reconnect = True
 
         t = threading.Thread(target=self._start_ws)
@@ -144,7 +146,6 @@ class BinanceClient:
         Get a list of symbols/contracts on the exchange to be displayed in the OptionMenus of the interface.
         :return:
         """
-
         if self.futures:
             exchange_info = self._make_request("GET", "/fapi/v1/exchangeInfo", dict())
         else:
@@ -195,25 +196,29 @@ class BinanceClient:
         :param contract:
         :return:
         """
-        
+        self.ws: websocket.WebSocketApp
         data = dict()
         data['symbol'] = contract.symbol
+        print("TestBidAsk: ", self.prices)
+        # def _on_message_callback(data):
+        #     self.prices
+        # return self.prices[self.symbol]
 
-        if self.futures:
-            ob_data = self._make_request("GET", "/fapi/v1/ticker/bookTicker", data)
-        else:
-            ob_data = self._make_request("GET", "/api/v3/ticker/bookTicker", data)
-        # print("data: ", data)
-        # print("ob_data: ", ob_data)
+        # if self.futures:
+        #     ob_data = self._make_request("GET", "/fapi/v1/ticker/bookTicker", data)
+        # else:
+        #     ob_data = self._make_request("GET", "/api/v3/ticker/bookTicker", data)
+        # # print("data: ", data)
+        # # print("ob_data: ", ob_data)
         
-        if ob_data is not None:
-            if contract.symbol not in self.prices:  # Add the symbol to the dictionary if needed
-                self.prices[contract.symbol] = {'bid': float(ob_data['bidPrice']), 'ask': float(ob_data['askPrice'])}
-            else:
-                self.prices[contract.symbol]['bid'] = float(ob_data['bidPrice'])
-                self.prices[contract.symbol]['ask'] = float(ob_data['askPrice'])
+        # if ob_data is not None:
+        #     if contract.symbol not in self.prices:  # Add the symbol to the dictionary if needed
+        #         self.prices[contract.symbol] = {'bid': float(ob_data['bidPrice']), 'ask': float(ob_data['askPrice'])}
+        #     else:
+        #         self.prices[contract.symbol]['bid'] = float(ob_data['bidPrice'])
+        #         self.prices[contract.symbol]['ask'] = float(ob_data['askPrice'])
 
-            return self.prices[contract.symbol]
+        #     return self.prices[contract.symbol]
             
 
     def get_balances(self) -> typing.Dict[str, Balance]:
@@ -244,8 +249,8 @@ class BinanceClient:
                     print("Account_Data: ", balances)
             else:
                 for a in account_data['balances']:
-                    balances = a['asset'] + ': Free = ' + a['free'] + ' Locked = ' + a['locked']
-                    # balances = Balance(a, self.platform)
+                    # balances = a['asset'] + ': Free = ' + a['free'] + ' Locked = ' + a['locked']
+                    balances = Balance(a, self.platform)
                     print("Balances in loop: ", balances)
                     # wss://testnet.binance.vision/ws/btcusdt@bookTicker 
 
@@ -386,6 +391,10 @@ class BinanceClient:
 
         self.ws = websocket.WebSocketApp(self._wss_url, on_open=self._on_open, on_close=self._on_close,
                                          on_error=self._on_error, on_message=self._on_message)
+        # print("Closing WebSocket connection...")
+        # self.ws.close(reason='closing')
+        # print("WebSocket connection closed.")
+        
         while True:
             try:
                 if self.reconnect:  # Reconnect unless the interface is closed by the user
@@ -406,16 +415,14 @@ class BinanceClient:
         print("TestBookTicker", self.subscribe_channel(list(self.contracts.values()), "bookTicker"))
         print("TestAggTrade", self.subscribe_channel(list(self.contracts.values()), "aggTrade"))
 
-    def _on_close(self, ws, close_status, close_msg):
+    def _on_close(self, ws):
+    # def _on_close(self, ws, close_status, close_reason):
         
         """
         Callback method triggered when the connection drops
         :return:
         """
-        print("BinanceClient._on_close() called with the following arguments:")
-        print("ws:", ws)
-        print("close_status:", close_status)
-        print("close_msg:", close_msg)
+        # print(f"_on_close() called with ws: {ws}, close_status: {close_status}, close_reason: {close_reason}")
         logger.warning("Binance Websocket connection closed")
 
     def _on_error(self, ws, msg: str):
@@ -438,6 +445,8 @@ class BinanceClient:
 
         data = json.loads(msg)
         # print("Data_Message: ", data['data']) # maybe arguments problems
+        if data['data']['s'] == self.symbol:
+            self._on_message_callback(data)
 
         if 'e' in data['data']:
             # print("Hello e: ", data['data']['e'])

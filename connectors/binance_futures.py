@@ -228,7 +228,7 @@ class BinanceFuturesClient:
     def _on_message(self, ws, msg: str):
 
         data = json.loads(msg)
-
+        print("Data: %s", data)
         if "e" in data:
             if data['e'] == "bookTicker":
 
