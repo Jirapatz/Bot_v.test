@@ -1,8 +1,8 @@
 import logging
 import config
 
-from connectors.binance_futures import BinanceFuturesClient
-# from connectors.binance import BinanceClient
+# from connectors.binance_futures import BinanceFuturesClient
+from connectors.binance import BinanceClient
 from interface.root_component import Root
 
 
@@ -26,11 +26,9 @@ logger.addHandler(file_handler)
 
 
 if __name__ == '__main__':  # Execute the following code only when executing main.py (not when importing it)
-    binance = BinanceFuturesClient(config.FUTURES_API_KEY, config.FUTURES_API_SECRET, testnet=True)
-    # binance = BinanceClient(config.FUTURES_API_KEY, config.FUTURES_API_SECRET, testnet=True, futures=True)
+    # binance = BinanceFuturesClient(config.FUTURES_API_KEY, config.FUTURES_API_SECRET, testnet=True)
+    binance = BinanceClient(config.FUTURES_API_KEY, config.FUTURES_API_SECRET, testnet=True, futures=True)
     # binance = BinanceClient(config.SPOT_API_KEY, config.SPOT_API_SECRET, testnet=True, futures=False)
-    # print("API_KEY: ", config.SPOT_API_KEY)
-    # print("API_SECRET: ", config.SPOT_API_SECRET)
     
     root = Root(binance)
     root.mainloop()

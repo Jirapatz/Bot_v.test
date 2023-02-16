@@ -67,6 +67,7 @@ class BinanceClient:
 
         self.prices = dict()
         self.strategies: typing.Dict[int, typing.Union[TechnicalStrategy, BreakoutStrategy]] = dict()
+        print("Strategies: ", self.strategies)
 
         self.logs = []
 
@@ -445,15 +446,14 @@ class BinanceClient:
 
         data = json.loads(msg)
         # print("Data_Message: ", data['data']) # maybe arguments problems
-        if data['data']['s'] == self.symbol:
-            self._on_message_callback(data)
 
         if 'e' in data['data']:
             # print("Hello e: ", data['data']['e'])
             if data['data']['e'] == "bookTicker":
                 print("Hello bookTicker")
                 symbol = data['data']['s']
-
+                print("Symbol: ", symbol)
+                print("SelfPrices: ", self.prices)
                 if symbol not in self.prices:
                     self.prices[symbol] = {'bid': float(data['b']), 'ask': float(data['a'])}
                 else:
@@ -476,8 +476,9 @@ class BinanceClient:
             if data['data']['e'] == "aggTrade":
                 # print("Hello aggTrade")
                 symbol = data['data']['s']
-
+                print("Symbol: ", symbol)
                 for key, strat in self.strategies.items():
+                    print("Hello I'm in loop")
                     if strat.contract.symbol == symbol:
                         res = strat.parse_trades(float(data['data']['p']), float(data['data']['q']), data['data']['T'])  # Updates candlesticks
                         strat.check_trade(res)
