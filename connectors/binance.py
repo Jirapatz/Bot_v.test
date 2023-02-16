@@ -201,16 +201,30 @@ class BinanceClient:
         data = dict()
         data['symbol'] = contract.symbol
         print("TestBidAsk: ", self.prices)
-        # def _on_message_callback(data):
-        #     self.prices
-        # return self.prices[self.symbol]
+
+        if contract.symbol not in self.prices:
+            self.prices[contract.symbol] = {}
+
+        def on_message(ws, message):
+            message = json.loads(message)
+            if 'b' in message:
+                self.prices[contract.symbol]['bid'] = float(message['b'])
+            if 'a' in message:
+                self.prices[contract.symbol]['ask'] = float(message['a'])
+
+        if self.futures:
+            self.ws.futures_book_ticker(symbol=contract.symbol, callback=on_message)
+        else:
+            self.ws.book_ticker(symbol=contract.symbol, callback=on_message)
+
+        return self.prices[contract.symbol]
+
+
 
         # if self.futures:
         #     ob_data = self._make_request("GET", "/fapi/v1/ticker/bookTicker", data)
         # else:
         #     ob_data = self._make_request("GET", "/api/v3/ticker/bookTicker", data)
-        # # print("data: ", data)
-        # # print("ob_data: ", ob_data)
         
         # if ob_data is not None:
         #     if contract.symbol not in self.prices:  # Add the symbol to the dictionary if needed
