@@ -3,7 +3,7 @@ import requests
 import time
 import typing
 import collections
-
+import threading
 from urllib.parse import urlencode
 
 import hmac
@@ -202,38 +202,42 @@ class BinanceClient:
         data['symbol'] = contract.symbol
         print("TestBidAsk: ", self.prices)
 
-        if contract.symbol not in self.prices:
-            self.prices[contract.symbol] = {}
+        # self.symbol = contract.symbol
+        # print("TestBidAsk: ", self.prices)
+        # symbol = data['data']['s']
+        #         if symbol not in self.prices:
+        #             self.prices[symbol] = {'bid': float(data['b']), 'ask': float(data['a'])}
+        #         else:
+        #             self.prices[symbol]['bid'] = float(data['b'])
+        #             self.prices[symbol]['ask'] = float(data['a'])
+        
 
-        def on_message(ws, message):
-            message = json.loads(message)
-            if 'b' in message:
-                self.prices[contract.symbol]['bid'] = float(message['b'])
-            if 'a' in message:
-                self.prices[contract.symbol]['ask'] = float(message['a'])
+        # if contract.symbol not in self.prices:
+        #     self.prices[contract.symbol] = {'bid': 0.0, 'ask': 0.0}
+
+        # thread = threading.Thread(target=self._start_ws)
+        # thread.start()
+        # thread.join(timeout=1.0)
+
+        # return self.prices[contract.symbol]
+
+        
+
+
 
         if self.futures:
-            self.ws.futures_book_ticker(symbol=contract.symbol, callback=on_message)
+            ob_data = self._make_request("GET", "/fapi/v1/ticker/bookTicker", data)
         else:
-            self.ws.book_ticker(symbol=contract.symbol, callback=on_message)
-
-        return self.prices[contract.symbol]
-
-
-
-        # if self.futures:
-        #     ob_data = self._make_request("GET", "/fapi/v1/ticker/bookTicker", data)
-        # else:
-        #     ob_data = self._make_request("GET", "/api/v3/ticker/bookTicker", data)
+            ob_data = self._make_request("GET", "/api/v3/ticker/bookTicker", data)
         
-        # if ob_data is not None:
-        #     if contract.symbol not in self.prices:  # Add the symbol to the dictionary if needed
-        #         self.prices[contract.symbol] = {'bid': float(ob_data['bidPrice']), 'ask': float(ob_data['askPrice'])}
-        #     else:
-        #         self.prices[contract.symbol]['bid'] = float(ob_data['bidPrice'])
-        #         self.prices[contract.symbol]['ask'] = float(ob_data['askPrice'])
+        if ob_data is not None:
+            if contract.symbol not in self.prices:  # Add the symbol to the dictionary if needed
+                self.prices[contract.symbol] = {'bid': float(ob_data['bidPrice']), 'ask': float(ob_data['askPrice'])}
+            else:
+                self.prices[contract.symbol]['bid'] = float(ob_data['bidPrice'])
+                self.prices[contract.symbol]['ask'] = float(ob_data['askPrice'])
 
-        #     return self.prices[contract.symbol]
+            return self.prices[contract.symbol]
             
 
     def get_balances(self) -> typing.Dict[str, Balance]:
@@ -409,6 +413,11 @@ class BinanceClient:
         # print("Closing WebSocket connection...")
         # self.ws.close(reason='closing')
         # print("WebSocket connection closed.")
+
+        # if self.futures:
+        #     self.ws.futures_book_ticker(symbol=self.symbol, callback=self._on_message_callback)
+        # else:
+        #     self.ws.book_ticker(symbol=self.symbol, callback=self._on_message_callback)
         
         while True:
             try:
@@ -466,8 +475,6 @@ class BinanceClient:
             if data['data']['e'] == "bookTicker":
                 print("Hello bookTicker")
                 symbol = data['data']['s']
-                print("Symbol: ", symbol)
-                print("SelfPrices: ", self.prices)
                 if symbol not in self.prices:
                     self.prices[symbol] = {'bid': float(data['b']), 'ask': float(data['a'])}
                 else:
