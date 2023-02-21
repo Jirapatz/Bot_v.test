@@ -24,8 +24,9 @@ print(cm_futures_client.account())
 #     'price': 59808
 # }
 
-response = cm_futures_client.new_order(**params)
+# response = cm_futures_client.new_order(**params)
 # print(response)
+
 
 # Create and configure the logger object
 

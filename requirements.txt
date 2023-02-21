@@ -1,4 +1,5 @@
 websocket
 tkmacosx
-python-binance
 binance-futures-connector
+python-dateutil
+pandas
