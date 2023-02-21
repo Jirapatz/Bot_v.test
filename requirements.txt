@@ -1,2 +1,4 @@
 websocket
 tkmacosx
+python-binance
+binance-futures-connector
